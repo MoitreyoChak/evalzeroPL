@@ -1,0 +1,34 @@
+{
+  "name": "evalzero-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "Proprietory",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@auth/express": "^0.11.0",
+    "@auth/hasura-adapter": "^1.10.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.4",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.0",
+    "drizzle-orm": "^0.44.2",
+    "express": "^5.1.0",
+    "jose": "^6.0.11",
+    "nodemon": "^3.1.10",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
+    "pg": "^8.16.3",
+    "zod": "^3.25.67"
+  },
+  "scripts": {
+    "dev": "npx tsx --env-file=.env.local --watch ./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/passport-google-oauth20": "^2.0.16",
+    "@types/pg": "^8.15.4",
+    "drizzle-kit": "^0.31.4"
+  }
+}
