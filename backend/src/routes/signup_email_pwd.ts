@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { getDatabase } from "../db";
-import { accountsTable, basicAuthTable, usersTable } from "../db/schema";
+import { basicAuthTable, usersTable } from "../db/schema";
+import { generateJWT } from "../providers/auth.p";
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -15,7 +16,7 @@ export const signup_email_pwd = async (
   res: Response
 ) => {
   const db = getDatabase();
-  await db.transaction(async (tx) => {
+  const user = await db.transaction(async (tx) => {
     const [{ userId }] = await tx
       .insert(usersTable)
       .values({
@@ -28,6 +29,8 @@ export const signup_email_pwd = async (
       userId,
       password: req.body.password,
     });
+    return { id: userId };
   });
-  res.sendStatus(200);
+  const token = await generateJWT(user);
+  res.status(200).send(token);
 };
