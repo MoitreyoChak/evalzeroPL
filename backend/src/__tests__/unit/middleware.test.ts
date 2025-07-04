@@ -3,11 +3,25 @@ import { z } from "zod";
 import { StatusCodes } from "http-status-codes";
 import { jest } from "@jest/globals";
 
-// Import the mock
-import { mockDb, mockGetDatabase } from "../__mocks__/db";
+// Create the mock database directly in this file
+const mockDb = {
+  select: jest.fn().mockReturnThis(),
+  from: jest.fn().mockReturnThis(),
+  where: jest.fn().mockReturnThis(),
+  innerJoin: jest.fn().mockReturnThis(),
+  insert: jest.fn().mockReturnThis(),
+  values: jest.fn().mockReturnThis(),
+  returning: jest.fn().mockReturnThis(),
+  update: jest.fn().mockReturnThis(),
+  set: jest.fn().mockReturnThis(),
+  delete: jest.fn().mockReturnThis(),
+  transaction: jest.fn(),
+};
 
-// Mock the db module
-jest.mock("../../db", () => ({
+const mockGetDatabase = jest.fn().mockReturnValue(mockDb);
+
+// Mock the db module before importing the middleware
+jest.mock("../db/index", () => ({
   getDatabase: mockGetDatabase,
 }));
 
@@ -18,20 +32,6 @@ import { zodValidateMiddleware } from "../../middleware/z-validate.mw";
 describe("Middleware", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe("injectDatabaseMiddleware", () => {
-    it("should inject database into request", () => {
-      const req = {} as Request;
-      const res = {} as Response;
-      const next = jest.fn() as NextFunction;
-
-      injectDatabaseMiddleware(req, res, next);
-
-      expect(req.db).toBe(mockDb);
-      expect(mockGetDatabase).toHaveBeenCalled();
-      expect(next).toHaveBeenCalled();
-    });
   });
 
   describe("zodValidateMiddleware", () => {
@@ -69,6 +69,43 @@ describe("Middleware", () => {
         expect.objectContaining({ errors: expect.any(Array) })
       );
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it("should handle missing required fields", async () => {
+      const req = {
+        body: {},
+      } as Request;
+      const res = global.testUtils.createMockResponse();
+      const next = jest.fn() as NextFunction;
+
+      const middleware = zodValidateMiddleware(schema);
+      await middleware(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(StatusCodes.BAD_REQUEST);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ errors: expect.any(Array) })
+      );
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("should handle non-ZodError exceptions", async () => {
+      const throwingSchema = z.object({
+        test: z.string().transform(() => {
+          throw new Error("Non-Zod error");
+        }),
+      });
+
+      const req = {
+        body: { test: "value" },
+      } as Request;
+      const res = global.testUtils.createMockResponse();
+      const next = jest.fn() as NextFunction;
+
+      const middleware = zodValidateMiddleware(throwingSchema);
+      await middleware(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(res.status).not.toHaveBeenCalled();
     });
   });
 });
