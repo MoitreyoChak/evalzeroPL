@@ -1,16 +1,25 @@
 import { Request, Response, NextFunction } from "express";
-import injectDatabaseMiddleware from "../../middleware/inject-db.mw";
-import { zodValidateMiddleware } from "../../middleware/z-validate.mw";
 import { z } from "zod";
 import { StatusCodes } from "http-status-codes";
 import { jest } from "@jest/globals";
 
-// Mock the database
+// Import the mock
+import { mockDb, mockGetDatabase } from "../__mocks__/db";
+
+// Mock the db module
 jest.mock("../../db", () => ({
-  getDatabase: jest.fn().mockReturnValue("mocked-db"),
+  getDatabase: mockGetDatabase,
 }));
 
+// Import after mocking
+import injectDatabaseMiddleware from "../../middleware/inject-db.mw";
+import { zodValidateMiddleware } from "../../middleware/z-validate.mw";
+
 describe("Middleware", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe("injectDatabaseMiddleware", () => {
     it("should inject database into request", () => {
       const req = {} as Request;
@@ -19,7 +28,8 @@ describe("Middleware", () => {
 
       injectDatabaseMiddleware(req, res, next);
 
-      expect(req.db).toBe("mocked-db");
+      expect(req.db).toBe(mockDb);
+      expect(mockGetDatabase).toHaveBeenCalled();
       expect(next).toHaveBeenCalled();
     });
   });
@@ -62,7 +72,3 @@ describe("Middleware", () => {
     });
   });
 });
-// This test suite covers the injectDatabaseMiddleware and zodValidateMiddleware.
-// It ensures that the database is correctly injected into the request object and that the Zod validation
-// middleware correctly validates request bodies according to the defined schema.
-// The tests use Jest's mocking capabilities to simulate the database and validate the middleware behavior.

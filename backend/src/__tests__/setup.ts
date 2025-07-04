@@ -40,6 +40,42 @@ afterAll(() => {
     res.redirect = jest.fn().mockReturnValue(res);
     return res;
   },
+
+  // Database test utilities
+  createMockDbResult: (data: any = {}) => ({
+    // Mock typical Drizzle ORM query results
+    ...data,
+  }),
+
+  createMockUser: (overrides = {}) => ({
+    id: "test-user-id",
+    email: "test@example.com",
+    name: "Test User",
+    emailVerified: false,
+    avatar: null,
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  }),
+
+  createMockTransaction: (callback: any) => {
+    // Mock transaction that just calls the callback with a mock tx object
+    const mockTx = {
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      values: jest.fn().mockReturnThis(),
+      returning: jest.fn().mockReturnThis(),
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+    };
+    return callback(mockTx);
+  },
+
+  resetAllDbMocks: () => {
+    // This will be useful for resetting database mocks between tests
+    // You can import your db mock and reset it here
+  },
 };
 
 // Extend Jest matchers if needed
@@ -53,5 +89,12 @@ declare global {
   var testUtils: {
     createMockRequest: (overrides?: any) => any;
     createMockResponse: () => any;
+    createMockDbResult: (data?: any) => any;
+    createMockUser: (overrides?: any) => any;
+    createMockTransaction: (callback: any) => any;
+    resetAllDbMocks: () => void;
   };
 }
+
+// Mock fetch globally if needed for your tests
+global.fetch = jest.fn();
